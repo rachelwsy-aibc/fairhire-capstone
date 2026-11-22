@@ -38,7 +38,7 @@ if not check_password():
 
 st.title("✍️ Ad Generator")
 st.caption(
-    "Use Case 1 — describe the role and FairHire drafts a clear, inclusive, "
+    "Describe the role and FairHire drafts a clear, inclusive, "
     "TAFEP-aligned job advertisement for you."
 )
 
