@@ -2,7 +2,8 @@
 pages/1_AboutUs.py
 About Us page for the FairHire capstone project.
 Covers the assignment's "About Us" deliverable: project scope, objectives,
-data sources, and features.
+and features. Detailed data sources and data flows live on the
+Methodology page (pages/3_Methodology.py) — no duplication here.
 """
 import streamlit as st
 
@@ -45,9 +46,9 @@ st.markdown(
     | Objective | How FairHire meets it |
     |---|---|
     | **Consolidate information** from multiple official sources | Fair hiring guidelines (TAFEP, MOM) are retrieved live from our knowledge base, and official labour-market statistics (MOM MRSD) provide benchmarks |
-    | **Personalise the experience** with generic, non-identifiable inputs | Employers provide only job-related information (role text, pasted ads, uploaded documents) — no personal data is collected |
+    | **Personalise the experience** with generic, non-identifiable inputs | Employers provide only job-related information (role text, pasted ads, uploaded documents, form fields) — no personal data is collected |
     | **Enhance understanding** through interactivity | The assistant explains *why* each flagged phrase is problematic, cites the relevant guideline, and answers follow-up questions in chat |
-    | **Present information effectively** | Extracted text is shown in an editable box, assessments appear in a chat interface, and suggestions distinguish original wording from recommended rewrites |
+    | **Present information effectively** | Extracted text is shown in an editable box, assessments appear in a chat interface with a colour-coded verdict, and suggestions distinguish original wording from recommended rewrites |
     """
 )
 
@@ -56,27 +57,21 @@ st.header("📚 Data Sources")
 
 st.write(
     """
-    FairHire consolidates information from official and trustworthy,
-    publicly accessible sources. Fair-hiring guidance is retrieved at
-    runtime from a searchable knowledge base built from the sources below.
-    """
-)
+    FairHire consolidates information from **official and trustworthy,
+    publicly accessible sources**: fair-hiring guidance from **TAFEP** and
+    **MOM**, official **MOM job-vacancy statistics (MRSD, Sep 2025)**, and a
+    consolidated dataset of **advertised salaries**.
 
-st.markdown(
-    """
-    | Source | What it provides | How it is used |
-    |---|---|---|
-    | [TAFEP — Writing Job Advertisements](https://www.tal.sg/tafep/employment-practices/recruitment/writing-job-advertisements) | Do's and don'ts for fair job advertisements | Compliance review knowledge base |
-    | [TAFEP — Tripartite Guidelines on Fair Employment Practices](https://www.tal.sg/tafep/getting-started/fair/tripartite-guidelines) | The five principles of fair employment practices | Grounding for assessment explanations |
-    | [TAFEP — Avoiding discriminatory job ads](https://www.tal.sg/tafep/resources/articles/2020/how-to-avoid-being-discriminatory-in-online-job-ads) | Real-life examples of biased vs fair wording | Few-shot guidance for rewrites |
-    | [MOM — Consider all candidates fairly](https://www.mom.gov.sg/passes-and-permits/employment-pass/consider-all-candidates-fairly) | Fair consideration requirements for job postings | Compliance review knowledge base |
-    | [MOM — Job Vacancies (MRSD), Sep 2025](https://stats.mom.gov.sg/) | Official job vacancy counts by industry, occupational group and minimum qualification (3 CSV files in `data/`) | Labour-market context and benchmarks |
-    | Singapore advertised salaries dataset (1,000 postings, in `data/`) | Advertised salary ranges, minimum experience and key skills by role | Salary and requirement benchmarks |
+    The full list of sources — what each one provides, how it is loaded into
+    the knowledge base, and how the data flows through the app — is
+    documented on the **🛠️ Methodology page**.
     """
 )
 
 # -------------------------------------------------------------------- Features
 st.header("✨ Features")
+
+st.subheader("🔍 Use Case 1 — FairHire Checker: assess an existing advertisement")
 
 st.markdown(
     """
@@ -104,6 +99,37 @@ st.markdown(
     Improve your advertisement directly and resubmit it for a fresh
     assessment — FairHire remembers the conversation, so feedback builds
     on previous rounds.
+    """
+)
+
+st.subheader("✍️ Use Case 2 — Ad Generator: draft a new advertisement")
+
+st.markdown(
+    """
+    **1. 📋 Describe the role in a form**
+    Fill in generic, non-identifiable details: job title, industry,
+    seniority, employment type, and key responsibilities or skills.
+
+    **2. 💰 Built-in salary advisory**
+    If you enter a salary range, it is used in the draft as provided.
+    If you leave it out, FairHire advises one: the role is matched
+    against a consolidated dataset of 1,000 advertised Singapore
+    salaries, and the **median advertised range across comparable
+    roles** is suggested in the draft — shown to you first as metric
+    tiles (comparable postings found, typical lower and upper salary).
+    If fewer than 3 comparable postings exist, no figure is invented:
+    the draft marks the salary as negotiable instead.
+
+    **3. 🤖 AI-drafted, TAFEP-aligned advertisement**
+    The AI drafts a structured advertisement (job title, salary, working
+    hours, responsibilities, requirements, how to apply) under strict
+    fair-hiring rules: merit-based criteria only, no age-coded or gendered
+    language, no invented requirements or benefits.
+
+    **4. ✅ Built-in self-check**
+    The draft is then checked by the *same* compliance engine as the
+    FairHire Checker. If issues are found, edit the draft and re-run the
+    self-check until it passes — generator and checker close the loop.
     """
 )
 

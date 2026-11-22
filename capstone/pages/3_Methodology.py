@@ -48,14 +48,14 @@ st.markdown(
     produce job advertisements aligned with fair employment practices. It
     implements **two use cases**:
 
-    1. **Ad Generator (Use Case 1)** — an employer describes a role in a
-       form, and the app drafts a structured, TAFEP-aligned job
-       advertisement, then self-checks the draft against the official
-       guidelines.
-    2. **FairHire Checker (Use Case 2)** — an employer submits an existing
+    1. **FairHire Checker (Use Case 1)** — an employer submits an existing
        job advertisement (typed, pasted, PDF or DOCX), and the app assesses
        it against the guidelines, explaining every issue with citations and
        suggested rewrites.
+    2. **Ad Generator (Use Case 2)** — an employer describes a role in a
+       form, and the app drafts a structured, TAFEP-aligned job
+       advertisement, then self-checks the draft against the official
+       guidelines.
 
     **Technique stack:** Retrieval-Augmented Generation (RAG) over official
     guideline sources, prompt engineering with strict grounding and
@@ -70,7 +70,7 @@ st.markdown(
     """
     | Model | Used for | Settings |
     |---|---|---|
-    | `gpt-4o-mini` | Compliance assessment (Use Case 2), draft generation (Use Case 1), query contextualisation and multi-query expansion | `temperature=0`, `seed=42` |
+    | `gpt-4o-mini` | Compliance assessment (Use Case 1), draft generation (Use Case 2), query contextualisation and multi-query expansion | `temperature=0`, `seed=42` |
     | `text-embedding-3-small` | Embedding guideline chunks for the vector store | default dimensions |
     """
 )
@@ -103,7 +103,7 @@ st.markdown(
 
 st.markdown(
     """
-    Two **structured datasets** (in `capstone/data/`) support Use Case 1:
+    Two **structured datasets** (in `capstone/data/`) support Use Case 2:
 
     - **MOM MRSD Job Vacancies (as at September 2025)** — official vacancy
       counts by industry, occupational group and minimum qualification.
@@ -226,7 +226,7 @@ digraph usecase1 {
     draft [label="9. Draft advertisement\\n(structured format)", shape=box];
     review [label="10. Editable review box", shape=box];
     selfchk [label="11. Run self-check?", shape=diamond, fillcolor="#FCE8E6", color="#EA4335"];
-    engine [label="12. check_compliance()\\nsame RAG engine as Use Case 2\\n(see Flowchart 1, steps 7-13)", shape=box, fillcolor="#FEF7E0", color="#F9AB00"];
+    engine [label="12. check_compliance()\\nsame RAG engine as Use Case 1\\n(see Flowchart 1, steps 7-13)", shape=box, fillcolor="#FEF7E0", color="#F9AB00"];
     verdict [label="13. Verdict?", shape=diamond, fillcolor="#FCE8E6", color="#EA4335"];
     ready [label="14. Draft ready -\\ncopy to job portal", shape=oval, fillcolor="#D2E3FC"];
     back [label="13a. Edit draft per issues found", shape=box];
@@ -257,7 +257,7 @@ digraph usecase1 {
 # ============================================================================
 # SECTION 4 — USE CASE 2 + FLOWCHART 1
 # ============================================================================
-st.header("4. Use Case 2 — FairHire Checker: Assess an Existing Job Ad")
+st.header("4. Use Case 1 — FairHire Checker: Assess an Existing Job Ad")
 
 st.markdown(
     """
@@ -289,10 +289,10 @@ st.markdown(
     """
 )
 
-st.subheader("Flowchart 1 — Process flow for Use Case 2")
+st.subheader("Flowchart 1 — Process flow for Use Case 1")
 st.graphviz_chart(FLOWCHART_1_DOT)
 st.caption(
-    "Figure 1 — Use Case 2: assessment of an existing job advertisement. "
+    "Figure 1 — Use Case 1: assessment of an existing job advertisement. "
     "Diamonds are decision points; the cylinder is the vector database; "
     "the loop at step 14 supports follow-up questions and edit-and-resubmit."
 )
@@ -300,7 +300,7 @@ st.caption(
 # ============================================================================
 # SECTION 5 — USE CASE 1 + FLOWCHART 2
 # ============================================================================
-st.header("5. Use Case 1 — Ad Generator: Draft a TAFEP-Aligned Job Ad")
+st.header("5. Use Case 2 — Ad Generator: Draft a TAFEP-Aligned Job Ad")
 
 st.markdown(
     """
@@ -312,12 +312,21 @@ st.markdown(
     - **Industry list** — parsed from the MOM MRSD by-industry CSV
       (`load_industries()`), with column forward-fill for the source
       report's merged cells and footnote/header filtering.
-    - **Salary benchmark** — `salary_benchmark()` matches the job title
-      against the advertised-salaries dataset (word match with stop-word
-      filtering, monthly postings only); with **3 or more** comparable
-      postings it shows median min–max metric tiles, otherwise the prompt
-      instructs the model to mark salary negotiable rather than invent a
-      figure.
+    - **Salary advisory** — `salary_benchmark()` advises a salary for the
+      draft in three cases: (a) if the employer entered a range, it is
+      used as provided; (b) otherwise the job title is matched against
+      the advertised-salaries dataset (lower-case word match, words of 3+
+      letters with generic stop-words such as "senior" or "staff"
+      excluded, monthly-salary postings only); with **3 or more**
+      comparable postings, the **medians of the advertised minimum and
+      maximum** are injected into the draft prompt and shown to the
+      employer as metric tiles; (c) with fewer than 3 matches, no figure
+      is quoted — the prompt instructs the model to omit a salary or mark
+      it **negotiable** rather than invent one. The draft's Salary line is
+      therefore always the provided range, the dataset-backed suggestion,
+      or "Negotiable" — never a made-up market rate. (No live web search
+      is performed; the advisory is computed entirely from the
+      consolidated dataset.)
 
     The draft prompt encodes **TAFEP-aligned rules**: merit-based criteria
     only; no mention or hint of age, gender, race, religion, marital
@@ -329,18 +338,18 @@ st.markdown(
     `helper_functions/llm.get_completion()` and shown in an **editable
     review box**.
 
-    **Closing the loop:** the *same* compliance engine as Use Case 2
+    **Closing the loop:** the *same* compliance engine as Use Case 1
     (`check_compliance()`) then self-checks the edited draft. If the
     verdict is not PASS, the employer edits and re-checks until the draft
     is ready — the generator and the checker share one grounded engine.
     """
 )
 
-st.subheader("Flowchart 2 — Process flow for Use Case 1")
+st.subheader("Flowchart 2 — Process flow for Use Case 2")
 st.graphviz_chart(FLOWCHART_2_DOT)
 st.caption(
-    "Figure 2 — Use Case 1: generating a fair job advertisement from form "
-    "inputs. Step 12 reuses the Use Case 2 compliance engine (Flowchart 1, "
+    "Figure 2 — Use Case 2: generating a fair job advertisement from form "
+    "inputs. Step 12 reuses the Use Case 1 compliance engine (Flowchart 1, "
     "steps 7–13) as a self-check subprocess."
 )
 
@@ -370,6 +379,10 @@ st.markdown(
     - Clauses not covered by the retrieved guidelines (e.g. overtime
       requirements) are routed to NOTES rather than ISSUES FOUND; the
       taxonomy rule reduces but cannot eliminate mis-categorisation.
+    - The salary advisory matches job titles by simple keyword words
+      (stop-word filtered); unusual or novel job titles may fall below
+      the 3-comparable-postings threshold and receive the
+      "negotiable" fallback instead of a suggested range.
     - Assessments are AI-assisted guidance, not legal advice (see the
       disclaimer on the About Us page).
     """
